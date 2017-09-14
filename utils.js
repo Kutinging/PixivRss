@@ -1,33 +1,10 @@
+const fs = require('fs');
+const path = require('path');
+//
 const mysql = require('mysql');
+const _DATE_FORMAT = require('date.format');
+//
 const config = require('./config.js');
-
-// 中文标题
-const MODE = {
-  'daily'      : '每日',
-  'weekly'     : '每周',
-  'monthly'    : '每月',
-  'rookie'     : '新人',
-  'original'   : '原创',
-  'male'       : '男性向作品',
-  'female'     : '女性向作品',
-  // r18
-  'daily_r18'  : '每日R-18',
-  'weekly_r18' : '每周R-18',
-  'male_r18'   : '男性向R-18',
-  'female_r18' : '女性向R-18',
-  'r18g'       : '每日R-18G',
-};
-
-// 这个id是保存上榜log时用的
-const MODE_ID = {
-  'daily'    : 1,
-  'weekly'   : 2,
-  'monthly'  : 3,
-  'rookie'   : 4,
-  'original' : 5,
-  'male'     : 6,
-  'female'   : 7,
-}
 
 // mysql
 class DB {
@@ -49,3 +26,36 @@ class DB {
     this.cursor.end();
   }
 }
+
+// log
+const LOG = {
+  path: path.join(__dirname, 'log'),
+  log(pixivId, msg) {
+    if( !config.debug ) {
+      return false;
+    }
+    if( !msg ) {
+      msg = pixivId;
+      pixivId = undefined;
+    }
+    let now = new Date();
+    let _msg = `[${now.format('{hh}:{mm}:{ss}')}] ` + (pixivId ? ` ${pixivId} >` : '') + ` ${msg}`;
+    console.log(_msg);
+    this.output(_msg);
+  },
+  end() {
+    this.output('\r\n');
+  },
+  output(msg) {
+    let date = new Date(), fname = path.join(LOG.path, date.format('{YYYY}-{MM}-{DD}.log'));
+    fs.appendFile(fname, `${msg}\r\n`, (err) => {
+      if( err ) {
+        console.error(`写入日志文件失败 ${err}`);
+      }
+    });
+  }
+}
+
+module.exports = {
+  DB, LOG
+};
