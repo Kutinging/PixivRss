@@ -1,0 +1,22 @@
+{
+  "name": "pixivrss",
+  "version": "1.0.0",
+  "description": "--------",
+  "main": "make.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chitosai/PixivRss.git"
+  },
+  "author": "TheC",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chitosai/PixivRss/issues"
+  },
+  "homepage": "https://github.com/chitosai/PixivRss#readme",
+  "dependencies": {
+    "mysql": "^2.14.1"
+  }
+}

@@ -1,7 +1,4 @@
-/cache/
-/*.pyc
 /pixiv.cookie.txt
-/config.py
-/test.py
-/ranking.html
 /exist.*.json
+
+/node_modules/
