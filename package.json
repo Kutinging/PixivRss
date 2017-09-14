@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/chitosai/PixivRss#readme",
   "dependencies": {
+    "cookie": "^0.3.1",
     "date.format": "^1.1.2",
+    "form-data": "^2.3.1",
     "got": "^7.1.0",
     "mysql": "^2.14.1"
   }
