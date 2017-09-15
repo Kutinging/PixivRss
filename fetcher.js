@@ -1,4 +1,4 @@
-const request = require('got');
+const jsdom = require('jsdom').JSDOM;
 const LOG = require('./utils.js').LOG;
 const DB = require('./utils.js').DB;
 const HTTP = require('./utils.js').HTTP;
@@ -32,6 +32,7 @@ const MODE_ID = {
   'female'   : 7,
 }
 
+// 登录Pixiv
 function loginToPixiv() {
   LOG.log('登录Pixiv');
   let http = new HTTP({
@@ -63,3 +64,61 @@ function loginToPixiv() {
     LOG.log('登录失败');
   });
 }
+
+// 解析排行页面，抓取排行列表
+function parseRankPage(html, mode) {
+  LOG.log(`开始解析 ${mode} 排行页面`);
+  let doc = new jsdom(html);
+  let nodes = doc.window.document.querySelectorAll('section.ranking-item');
+  if( !nodes.length ) {
+    LOG.log('解析失败：找不到 .ranking-item');
+    throw new Error('解析失败：找不到 .ranking-item');
+  }
+  let items = [];
+  Array.from(nodes).forEach((node) => {
+    // 基本数据
+    let item = {
+      ranking: node.dataset.rank,
+      title: node.dataset.title,
+      author: node.dataset.userName,
+      date: node.dataset.date,
+      view: node.dataset.viewCount,
+      score: node.dataset.ratingCount,
+      preview: node.querySelector('._thumbnail').dataset.src
+    }
+    // 获取图片地址
+    let linkDom = node.querySelector('.work._work');
+    // 是否动图，动图抓不了，不过现在好像也不多了
+    item.isAnimated = linkDom.classList.contains('ugoku-illust');
+    // 获取图片pixivId
+    let m1 = /illust_id=(\d+)/.exec(linkDom.href);
+    item.id = m1[1];
+    // 获取userId
+    let userDom = node.querySelector('.user-container');
+    let m2 = /member\.php\?id=(\d+)/.exec(userDom.href);
+    item.uid = m2[1];
+    items.push(item);
+  });
+  if( items.length ) {
+    LOG.log('解析成功');
+    return items;
+  } else {
+    LOG.log('解析页面失败');
+    throw new Error('解析页面失败')
+  }
+}
+
+// 抓取排行页面
+function getRankPage(mode) {
+  LOG.log(`开始抓取 ${mode} 排行`);
+  let http = new HTTP({
+    cookie: 'pixiv'
+  });
+  http.get(`http://www.pixiv.net/ranking.php?lang=zh&mode=${mode}`)
+  .then((response) => {
+    let list = parseRankPage(response.body, mode);
+
+  });
+}
+
+getRankPage('daily')
