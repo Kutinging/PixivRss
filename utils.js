@@ -53,7 +53,7 @@ class HTTP {
     if( opt.cookie ) {
       this.useCookie = true;
       this.cookiePath = path.join(__dirname, `cookie.${opt.cookie}.txt`);
-      this.cookieContent = fs.readFileSync(this.cookiePath, 'utf-8');
+      this.cookieContent = this.useCookie ? fs.readFileSync(this.cookiePath, 'utf-8') : undefined;
     }
   }
   get(url) {
@@ -61,7 +61,7 @@ class HTTP {
     return new Promise((resolve, reject) => {
       got(url, {
         headers: this.headers,
-        cookie: this.useCookie ? this.cookieContent : undefined
+        cookie: this.cookieContent
       }).then((res) => {
         resolve(res);
       }).catch((err) => {
@@ -80,7 +80,7 @@ class HTTP {
       }
       got.post(url, {
         headers: this.headers,
-        cookie: this.useCookie ? this.cookieContent : undefined,
+        cookie: this.cookieContent,
         body: form
       }).then((res) => {
         // 保存cookie
@@ -94,6 +94,14 @@ class HTTP {
         reject(err);
       });
     });
+  }
+  download(url, fpath) {
+    LOG.log(`下载图片：${url}`);
+    let fullPath = path.join(__dirname, 'previews', fpath);
+    got.stream(url, {
+      headers: this.headers,
+      cookie: this.cookieContent
+    }).pipe(fs.createWriteStream(fullPath));
   }
 }
 
@@ -121,7 +129,12 @@ class DB {
 // 已下载列表
 const EXIST = {
   read(mode) {
-    return JSON.parse(fs.readFileSync(path.join(__dirname, 'exist', `${mode}.json`), 'utf-8'));
+    let raw = fs.readFileSync(path.join(__dirname, 'exist', `${mode}.json`), 'utf-8');
+    if( !raw ) {
+      return [];
+    } else {
+      return JSON.parse(raw);
+    }
   },
   save(mode, data) {
     fs.writeFile(path.join(__dirname, 'exist', `${mode}.json`), JSON.stringify(data));

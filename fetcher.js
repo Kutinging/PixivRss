@@ -2,6 +2,7 @@ const jsdom = require('jsdom').JSDOM;
 const LOG = require('./utils.js').LOG;
 const DB = require('./utils.js').DB;
 const HTTP = require('./utils.js').HTTP;
+const EXIST = require('./utils.js').EXIST;
 const config = require('./config.js');
 
 // 中文标题
@@ -109,7 +110,7 @@ function parseRankPage(html, mode) {
 }
 
 // 抓取排行页面
-function getRankPage(mode) {
+function fetchRankPage(mode) {
   LOG.log(`开始抓取 ${mode} 排行`);
   let http = new HTTP({
     cookie: 'pixiv'
@@ -117,8 +118,41 @@ function getRankPage(mode) {
   http.get(`http://www.pixiv.net/ranking.php?lang=zh&mode=${mode}`)
   .then((response) => {
     let list = parseRankPage(response.body, mode);
-
+    let exists = EXIST.read(mode);
+    let count = 0, realCount = 0, postedWeiboCount = 0;
+    LOG.log('开始按列表抓取内容');
+    for( let i = 0; i < list.length; i++ ) {
+      // debug模式下做个最大数据限制
+      if( ++count > config.debugMaxFetch ) {
+        LOG.log(`达到debug模式抓取阈值 ${config.debugMaxFetch}，停止抓取`);
+        return false;
+      }
+      let item = list[i], pixivId = item.id;
+      let m = exists.find((_item) => {
+        return _item.id == pixivId;
+      });
+      if( m ) {
+        console.log(`${pixivId} 已下载，跳过`);
+        continue;
+      }
+      // 是否需要发微博
+      // 发微博需要 1、抓一个中等尺寸图 2、发微博
+      if( mode in config.weibo ) {
+      } else {
+        // 不发微博只需要 1、下小尺寸图 2、存在本地
+        let dhttp = new HTTP({
+          headers: {
+            Referer: 'http://www.pixiv.net/ranking.php'
+          },
+          cookie: 'pixiv'
+        });
+        dhttp.download(item.preview, `${pixivId}.jpg`);
+        item.image = `http://rakuen.thec.me/PixivRss/previews/${pixivId}.jpg`;
+        item.preview = undefined;
+      }
+    }
+    LOG.log('抓取完毕');
   });
 }
 
-getRankPage('daily')
+fetchRankPage('male')
