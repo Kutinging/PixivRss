@@ -118,6 +118,16 @@ class DB {
   }
 }
 
+// 已下载列表
+const EXIST = {
+  read(mode) {
+    return JSON.parse(fs.readFileSync(path.join(__dirname, 'exist', `${mode}.json`), 'utf-8'));
+  },
+  save(mode, data) {
+    fs.writeFile(path.join(__dirname, 'exist', `${mode}.json`), JSON.stringify(data));
+  }
+}
+
 module.exports = {
-  DB, LOG, HTTP
+  DB, LOG, HTTP, EXIST
 };
