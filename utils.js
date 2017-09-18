@@ -49,6 +49,8 @@ class HTTP {
       'Accept-Language': 'zh-CN,zh;q=0.8',
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.98 Safari/537.36'
     }, opt.headers);
+    // 合并其他设置
+    this.timeout = opt.timeout ? opt.timeout : 5000; // 超时时间
     // 是否使用cookie
     if( opt.cookie ) {
       this.useCookie = true;
@@ -72,6 +74,7 @@ class HTTP {
       this.loadCookie();
       got(url, {
         headers: this.headers,
+        timeout: this.timeout
       }).then((res) => {
         this.saveCookie(res.headers['set-cookie']);
         resolve(res);
@@ -92,6 +95,7 @@ class HTTP {
       }
       got.post(url, {
         headers: this.headers,
+        timeout: this.timeout,
         body: form
       }).then((res) => {
         this.saveCookie(res.headers['set-cookie']);
