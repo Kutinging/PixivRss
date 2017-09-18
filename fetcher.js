@@ -35,7 +35,7 @@ const MODE_ID = {
 
 // 登录Pixiv
 function loginToPixiv() {
-  LOG.log('登录Pixiv');
+  LOG.log('开始登录');
   let http = new HTTP({
     headers: {
       'Host': 'accounts.pixiv.net',
@@ -46,29 +46,33 @@ function loginToPixiv() {
     cookie: 'pixiv'
   });
   LOG.log('查找 post-key');
-  http.get('https://accounts.pixiv.net/login')
-  .then((response) => {
-    // 查找post_key
-    let m = /name="post_key" value="(\w+)"/.exec(response.body);
-    if( !m ) {
-      return LOG.log('找不到 post-key');
-    }
-    return http.post('https://accounts.pixiv.net/api/login', {
-      pixiv_id: config.user.user,
-      password: config.user.password,
-      source: 'accounts',
-      post_key: m[1]
+  return new Promise((resolve, reject) => {
+    http.get('https://accounts.pixiv.net/login')
+    .then((response) => {
+      // 查找post_key
+      let m = /name="post_key" value="(\w+)"/.exec(response.body);
+      if( !m ) {
+        return LOG.log('找不到 post-key');
+      }
+      return http.post('https://accounts.pixiv.net/api/login', {
+        pixiv_id: config.user.user,
+        password: config.user.password,
+        source: 'accounts',
+        post_key: m[1]
+      });
+    }).then(() => {
+      LOG.log('登录成功');
+      resolve();
+    }).catch(() => {
+      LOG.log('登录失败');
+      reject();
     });
-  }).then(() => {
-    LOG.log('登录成功');
-  }).catch(() => {
-    LOG.log('登录失败');
   });
 }
 
 // 解析排行页面，抓取排行列表
 function parseRankPage(html, mode) {
-  LOG.log(`开始解析 ${mode} 排行页面`);
+  LOG.log(`开始解析 ${mode} 排行`);
   let doc = new jsdom(html);
   let nodes = doc.window.document.querySelectorAll('section.ranking-item');
   if( !nodes.length ) {
@@ -104,8 +108,8 @@ function parseRankPage(html, mode) {
     LOG.log('解析成功');
     return items;
   } else {
-    LOG.log('解析页面失败');
-    throw new Error('解析页面失败')
+    LOG.log('解析失败');
+    throw new Error('解析失败')
   }
 }
 
@@ -155,4 +159,4 @@ function fetchRankPage(mode) {
   });
 }
 
-fetchRankPage('male')
+fetchRankPage('daily_r18')
