@@ -13,10 +13,13 @@ const padLeft = ' '.repeat(11);
 // log
 const LOG = {
   path: path.join(__dirname, 'log'),
-  log(pixivId, msg) {
+  debug(pixivId, msg) {
     if( !config.debug ) {
       return false;
     }
+    this.log(pixivId, msg);
+  }
+  log(pixivId, msg) {
     if( !msg ) {
       msg = pixivId;
       pixivId = undefined;
