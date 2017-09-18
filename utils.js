@@ -53,16 +53,27 @@ class HTTP {
     if( opt.cookie ) {
       this.useCookie = true;
       this.cookiePath = path.join(__dirname, `cookie.${opt.cookie}.txt`);
-      this.cookieContent = this.useCookie ? fs.readFileSync(this.cookiePath, 'utf-8') : undefined;
+    }
+  }
+  loadCookie() {
+    if( this.useCookie ) {
+      this.headers.cookie = this.useCookie ? fs.readFileSync(this.cookiePath, 'utf-8') : undefined;
+    }
+  }
+  saveCookie(remoteCookie) {
+    if( this.useCookie && remoteCookie ) {
+      LOG.log(`设置 Cookie：${remoteCookie}`)
+      fs.writeFileSync(this.cookiePath, remoteCookie);
     }
   }
   get(url) {
     LOG.log(`发起 get 请求，url：${url}`);
     return new Promise((resolve, reject) => {
+      this.loadCookie();
       got(url, {
         headers: this.headers,
-        cookie: this.cookieContent
       }).then((res) => {
+        this.saveCookie(res.headers['set-cookie']);
         resolve(res);
       }).catch((err) => {
         LOG.log(`请求失败：${JSON.stringify(err)}`);
@@ -73,6 +84,7 @@ class HTTP {
   post(url, data) {
     LOG.log(`发起 post 请求，url：${url}`);
     return new Promise((resolve, reject) => {
+      this.loadCookie();
       // 打包post数据。。好蠢
       let form = new formData();
       for( let key in data ) {
@@ -80,14 +92,9 @@ class HTTP {
       }
       got.post(url, {
         headers: this.headers,
-        cookie: this.cookieContent,
         body: form
       }).then((res) => {
-        // 保存cookie
-        if( this.useCookie ) {
-          this.cookieContent = res.headers['set-cookie'];
-          fs.writeFile(this.cookiePath, res.headers['set-cookie']);
-        }
+        this.saveCookie(res.headers['set-cookie']);
         resolve(res);
       }).catch((err) => {
         LOG.log(`请求失败：${JSON.stringify(err)}`);
