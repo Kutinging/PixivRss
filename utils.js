@@ -18,7 +18,7 @@ const LOG = {
       return false;
     }
     this.log(pixivId, msg);
-  }
+  },
   log(pixivId, msg) {
     if( !msg ) {
       msg = pixivId;
@@ -77,13 +77,13 @@ class HTTP {
       this.loadCookie();
       got(url, {
         headers: this.headers,
-        timeout: this.timeout
+        timeout: this.timeout,
+        retries: 1
       }).then((res) => {
         this.saveCookie(res.headers['set-cookie']);
         resolve(res);
       }).catch((err) => {
         LOG.log(`请求失败：${JSON.stringify(err)}`);
-        reject(err);
       });
     });
   }
@@ -99,13 +99,13 @@ class HTTP {
       got.post(url, {
         headers: this.headers,
         timeout: this.timeout,
-        body: form
+        body: form,
+        retries: 0
       }).then((res) => {
         this.saveCookie(res.headers['set-cookie']);
         resolve(res);
       }).catch((err) => {
         LOG.log(`请求失败：${JSON.stringify(err)}`);
-        reject(err);
       });
     });
   }
