@@ -84,6 +84,7 @@ class HTTP {
         resolve(res);
       }).catch((err) => {
         LOG.log(`请求失败：${JSON.stringify(err)}`);
+        reject(err);
       });
     });
   }
@@ -106,6 +107,7 @@ class HTTP {
         resolve(res);
       }).catch((err) => {
         LOG.log(`请求失败：${JSON.stringify(err)}`);
+        reject(err);
       });
     });
   }

@@ -109,7 +109,7 @@ function parseRankPage(html, mode) {
     return items;
   } else {
     LOG.log('解析失败');
-    throw new Error('解析失败')
+    throw new Error('解析失败');
   }
 }
 
@@ -123,14 +123,9 @@ function fetchRankPage(mode) {
   .then((response) => {
     let list = parseRankPage(response.body, mode);
     let exists = EXIST.read(mode);
-    let count = 0, realCount = 0, postedWeiboCount = 0;
+    let count = 0, postedWeiboCount = 0;
     LOG.log('开始按列表抓取内容');
     for( let i = 0; i < list.length; i++ ) {
-      // debug模式下做个最大数据限制
-      if( ++count > config.debugMaxFetch ) {
-        LOG.log(`达到debug模式抓取阈值 ${config.debugMaxFetch}，停止抓取`);
-        return false;
-      }
       let item = list[i], pixivId = item.id;
       let m = exists.find((_item) => {
         return _item.id == pixivId;
@@ -139,23 +134,34 @@ function fetchRankPage(mode) {
         console.log(`${pixivId} 已下载，跳过`);
         continue;
       }
-      // 是否需要发微博
-      // 发微博需要 1、抓一个中等尺寸图 2、发微博
-      if( mode in config.weibo ) {
-      } else {
-        // 不发微博只需要 1、下小尺寸图 2、存在本地
-        let dhttp = new HTTP({
-          headers: {
-            Referer: 'http://www.pixiv.net/ranking.php'
-          },
-          cookie: 'pixiv'
-        });
-        dhttp.download(item.preview, `${pixivId}.jpg`);
-        item.image = `http://rakuen.thec.me/PixivRss/previews/${pixivId}.jpg`;
-        item.preview = undefined;
+      // 特别愚蠢的..手动延迟，拉开请求时间差
+      setTimeout(() => {
+        // 是否需要发微博
+        // 发微博需要 1、抓一个中等尺寸图 2、发微博
+        if( mode in config.weibo ) {
+        } else {
+          // 不发微博只需要 1、下小尺寸图 2、存在本地
+          let dhttp = new HTTP({
+            headers: {
+              Referer: 'http://www.pixiv.net/ranking.php'
+            },
+            cookie: 'pixiv'
+          });
+          dhttp.download(item.preview, `${pixivId}.jpg`);
+          item.image = `http://rakuen.thec.me/PixivRss/previews/${pixivId}.jpg`;
+          item.preview = undefined;
+        }
+      }, 1234 * count);
+      // debug模式下做个最大数据限制
+      if( config.debug && ( ++count >= config.debugMaxFetch ) ) {
+        LOG.log(`达到debug模式抓取阈值 ${config.debugMaxFetch}，停止抓取`);
+        return false;
       }
     }
     LOG.log('抓取完毕');
+  }).catch(() => {
+    LOG.log(`抓取 ${mode} 排行失败`);
+    process.exit();
   });
 }
 
